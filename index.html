@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#333333">
+<title>Notes</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Notes">
+
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f5f5;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  .container {
+    background: #fff;
+    border-radius: 16px;
+    padding: 25px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    height: fit-content;
+  }
+  h1 {
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .subtitle {
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 12px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-size: 15px;
+    resize: vertical;
+    font-family: inherit;
+    outline: none;
+    transition: border 0.3s;
+    background: #fafafa;
+  }
+  textarea:focus { border-color: #ccc; background: #fff; }
+  input[type="text"] {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-size: 15px;
+    outline: none;
+    transition: border 0.3s;
+    font-family: inherit;
+    background: #fafafa;
+  }
+  input:focus { border-color: #ccc; background: #fff; }
+  button {
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .save-btn { width: 100%; background: #333; margin-top: 15px; }
+  .action-btn { width: 100%; margin-top: 12px; }
+  .enc-btn { background: #333; }
+  .dec-btn { background: #555; }
+  .copy-btn { background: #28a745; width: 100%; margin-top: 10px; }
+  .clear-btn { background: #aaa; width: 100%; margin-top: 10px; }
+  .status {
+    text-align: center;
+    font-size: 13px;
+    height: 18px;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+  .field { margin-bottom: 15px; }
+
+  /* 📋 Notes list */
+  .notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  .notes-header h3 { color: #333; font-size: 16px; }
+  .notes-count {
+    background: #f1f3f5;
+    color: #666;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+  .notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .empty-notes {
+    text-align: center;
+    color: #bbb;
+    font-size: 13px;
+    padding: 25px 10px;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 2px dashed #eee;
+  }
+  .note-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s, border 0.2s;
+  }
+  .note-item:hover { background: #f1f3f5; border-color: #ddd; }
+  .note-item:active { background: #e9ecef; }
+  .note-icon {
+    width: 38px;
+    height: 38px;
+    background: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 1px solid #eee;
+  }
+  .note-info { flex: 1; overflow: hidden; }
+  .note-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .note-preview {
+    color: #999;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .note-delete {
+    background: transparent;
+    color: #ccc;
+    font-size: 18px;
+    padding: 6px 8px;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    flex-shrink: 0;
+    width: auto;
+  }
+  .note-delete:hover { color: #dc3545; background: #fff5f5; }
+
+  .countdown {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #dc3545;
+    margin-top: 10px;
+    padding: 8px;
+    background: #fff5f5;
+    border-radius: 10px;
+    border: 1px solid #ffdddd;
+    display: none;
+  }
+  .countdown.show { display: block; }
+  .countdown .timer { font-size: 16px; color: #dc3545; }
+
+  .idle-warning {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #dc3545;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(220,53,69,0.4);
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .idle-warning.show { opacity: 1; }
+
+  .modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal-content {
+    background: #fff;
+    border-radius: 16px;
+    padding: 25px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .modal-content h2 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+  .modal-content .modal-sub {
+    color: #999;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    background: transparent;
+    color: #999;
+    font-size: 22px;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    width: auto;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .close-btn:hover { color: #333; }
+
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .modal-btns button { flex: 1; padding: 13px; }
+  .cancel-btn { background: #ccc; color: #333; }
+  .confirm-btn { background: #333; }
+  .delete-confirm { background: #dc3545; }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: #f1f3f5;
+    padding: 5px;
+    border-radius: 12px;
+  }
+  .tab {
+    flex: 1;
+    padding: 11px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    color: #666;
+    transition: background 0.2s, color 0.2s;
+    border: none;
+    background: transparent;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .tab.active-send { background: #333; color: #fff; }
+  .tab.active-recv { background: #555; color: #fff; }
+
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  .contact-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 3px 10px rgba(37,211,102,0.3);
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .contact-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .contact-name { flex: 1; }
+  .contact-icon { font-size: 20px; }
+
+  /* 🎨 DECRYPTED MESSAGE BUBBLE */
+  .decrypted-bubble {
+    width: 100%;
+    min-height: 100px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    outline: none;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    box-shadow: 
+      0 10px 30px rgba(102,126,234,0.45),
+      0 2px 8px rgba(118,75,162,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: all 0.3s ease;
+    animation: bubbleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: none;
+    -webkit-user-select: text;
+    user-select: text;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .decrypted-bubble::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+  }
+  .decrypted-bubble:empty::after {
+    content: '✨ Message ഇവിടെ വരും...';
+    color: rgba(255,255,255,0.55);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 15px;
+    position: relative;
+    z-index: 1;
+  }
+  .decrypted-bubble:not(:empty)::after { content: none; }
+  .decrypted-bubble:focus {
+    box-shadow: 
+      0 14px 40px rgba(102,126,234,0.65),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+    transform: translateY(-2px);
+  }
+
+  @keyframes bubbleIn {
+    0% {
+      opacity: 0;
+      transform: translateY(15px) scale(0.95);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(-3px) scale(1.01);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  }
+
+  /* ✅ Success state (green gradient) */
+  .decrypted-bubble.success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    box-shadow: 
+      0 10px 30px rgba(17,153,142,0.45),
+      0 2px 8px rgba(56,239,125,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+
+  /* 📋 Copy button */
+  .copy-decrypted {
+    width: 100%;
+    margin-top: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .copy-decrypted:active { transform: scale(0.98); }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 300;
+    pointer-events: none;
+    text-align: center;
+    max-width: 90%;
+  }
+  .toast.show { opacity: 1; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="idle-warning" id="idleWarning"></div>
+
+<!-- 📝 MAIN NOTES SCREEN -->
+<div class="container">
+  <h1>📝 Notes</h1>
+  <p class="subtitle">നിങ്ങളുടെ കുറിപ്പുകൾ ഇവിടെ എഴുതുക</p>
+
+  <div class="field">
+    <label>My Note:</label>
+    <textarea id="notePad" placeholder="ഇവിടെ എന്തെങ്കിലും എഴുതുക..."></textarea>
+  </div>
+
+  <button class="save-btn" onclick="openSaveModal()">💾 Save</button>
+
+  <div class="notes-header">
+    <h3>📋 My Notes</h3>
+    <span class="notes-count" id="notesCount">0</span>
+  </div>
+  <div class="notes-list" id="notesList"></div>
+</div>
+
+<!-- SAVE MODAL -->
+<div class="modal hidden" id="saveModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeSaveModal()">✕</button>
+    <h2>💾 Save Note</h2>
+    <p class="modal-sub">Note ന് ഒരു പേര് കൊടുക്കുക</p>
+
+    <div class="field">
+      <label>File name:</label>
+      <input type="text" id="fileName" placeholder="ഉദാ: mynote"
+             onkeydown="if(event.key==='Enter') handleSave()">
+    </div>
+
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeSaveModal()">Cancel</button>
+      <button class="confirm-btn" onclick="handleSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW NOTE MODAL -->
+<div class="modal hidden" id="viewModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeViewModal()">✕</button>
+    <h2 id="viewTitle">📝 Note</h2>
+    <p class="modal-sub" id="viewDate"></p>
+
+    <div class="field">
+      <label>Content:</label>
+      <textarea id="viewContent" style="min-height:150px;"></textarea>
+    </div>
+
+    <div class="modal-btns">
+      <button class="delete-confirm" onclick="confirmDelete()">🗑️ Delete</button>
+      <button class="confirm-btn" onclick="saveViewNote()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT MODAL -->
+<div class="modal hidden" id="chatModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeChat()">✕</button>
+    <h2>💬 Chat</h2>
+    <p class="modal-sub">🔐 AES-256 Military Grade</p>
+
+    <div class="tabs">
+      <button class="tab active-send" id="tabSend" onclick="switchTab('send')">📤 അയക്കാൻ</button>
+      <button class="tab" id="tabRecv" onclick="switchTab('recv')">📥 കാണാൻ</button>
+    </div>
+
+    <div id="sendScreen">
+      <div class="field">
+        <label>✍️ Message (Manglish):</label>
+        <textarea id="sendInput" style="min-height:80px;" placeholder="ഉദാ: hallo sanil enthoke und"></textarea>
+      </div>
+
+      <button class="enc-btn action-btn" onclick="openSendPopup()">🔐 Encrypt & Send</button>
+
+      <div class="countdown" id="sendCountdown">
+        🔒 <span class="timer" id="sendTimer">10</span>s ൽ auto clear ആകും...
+      </div>
+
+      <button class="clear-btn" onclick="clearSend()">🗑️ Clear</button>
+      <div class="status" id="sendStatus"></div>
+    </div>
+
+    <div id="recvScreen" class="hidden">
+      <div class="field">
+        <label>📩 Encrypted Code:</label>
+        <textarea id="recvInput" style="min-height:90px;" placeholder="Code paste ചെയ്യുക..."></textarea>
+      </div>
+
+      <button class="dec-btn action-btn" onclick="decryptText()">🔓 Decrypt</button>
+
+      <div class="field" style="margin-top:15px;">
+        <label>💬 Decrypted Message:</label>
+        <div id="recvOutput" class="decrypted-bubble" contenteditable="true"></div>
+      </div>
+
+      <button class="copy-decrypted" onclick="copyDecrypted()">📋 Copy Message</button>
+
+      <div class="countdown" id="recvCountdown">
+        🔒 <span class="timer" id="recvTimer">10</span>s ൽ auto clear ആകും...
+      </div>
+
+      <button class="clear-btn" onclick="clearRecv()">🗑️ Clear</button>
+      <div class="status" id="recvStatus"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SEND POPUP -->
+<div class="modal hidden" id="sendPopup">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeSendPopup()">✕</button>
+    <h2>📤 ആർക്ക് അയക്കണം?</h2>
+    <p class="modal-sub">ഒരാളെ തിരഞ്ഞെടുക്കുക</p>
+
+    <div class="contact-list" id="contactList"></div>
+
+    <button class="cancel-btn" style="width:100%; margin-top:15px; padding:13px; border-radius:12px; border:none; font-weight:600; cursor:pointer;"
+            onclick="closeSendPopup()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ═══════════════════════════════════════════════
+     ⚙️ CONFIG
+     ═══════════════════════════════════════════════ */
+  const FIXED_PASSWORD = "sps";
+  const AUTO_CLEAR_SECONDS = 10;
+  const IDLE_TIMEOUT_SECONDS = 15;
+  const NOTES_STORAGE_KEY = 'notes_app_data';
+  const FAKE_NOTE_TITLES = ["mynote", "shopping", "todo", "ideas", "work", "personal", "reminder"];
+
+  const CONTACTS = [
+    { name: "Sanil",   number: "918921357062" },
+    { name: "Pradeep", number: "918848968788" },
+    { name: "Shyam",   number: "919961049885" }
+  ];
+
+  /* ═══════════════════════════════════════════════
+     🔐 MILITARY-GRADE ENCRYPTION (AES-256-GCM + PBKDF2)
+     ═══════════════════════════════════════════════ */
+  async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(password),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+    return await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  function bufToBase64(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+
+  function base64ToBuf(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  async function encryptMessage(text) {
+    const enc = new TextEncoder();
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    const key = await deriveKey(FIXED_PASSWORD, salt);
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv, tagLength: 128 },
+      key,
+      enc.encode(text)
+    );
+
+    const combined = {
+      s: bufToBase64(salt),
+      i: bufToBase64(iv),
+      d: bufToBase64(encrypted)
+    };
+    return 'AES256:' + btoa(JSON.stringify(combined));
+  }
+
+  async function decryptMessage(encryptedStr) {
+    if (!encryptedStr.startsWith('AES256:')) {
+      throw new Error('Invalid format');
+    }
+    let combined;
+    try {
+      const b64 = encryptedStr.substring(7);
+      combined = JSON.parse(atob(b64));
+    } catch (e) {
+      throw new Error('Corrupt data');
+    }
+
+    const salt = new Uint8Array(base64ToBuf(combined.s));
+    const iv = new Uint8Array(base64ToBuf(combined.i));
+    const data = base64ToBuf(combined.d);
+
+    const key = await deriveKey(FIXED_PASSWORD, salt);
+
+    try {
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv, tagLength: 128 },
+        key,
+        data
+      );
+      return new TextDecoder().decode(decrypted);
+    } catch (e) {
+      throw new Error('Decryption failed');
+    }
+  }
+
+  /* ═══════════════════════════════════════════════
+     📝 NOTES STORAGE
+     ═══════════════════════════════════════════════ */
+  let notes = [];
+  let currentViewNoteId = null;
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+      notes = raw ? JSON.parse(raw) : [];
+    } catch (e) { notes = []; }
+    renderNotes();
+  }
+  function saveNotesToStorage() {
+    try {
+      localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+    } catch (e) {}
+  }
+  function renderNotes() {
+    const list = document.getElementById('notesList');
+    const count = document.getElementById('notesCount');
+    count.textContent = notes.length;
+
+    if (notes.length === 0) {
+      list.innerHTML = `<div class="empty-notes">📝 ഇതുവരെ notes ഇല്ല<br><span style="font-size:11px;">ഒരു note എഴുതി save ചെയ്യൂ</span></div>`;
+      return;
+    }
+    list.innerHTML = '';
+    [...notes].reverse().forEach(n => {
+      const item = document.createElement('div');
+      item.className = 'note-item';
+      const preview = (n.content || '').substring(0, 40) || '(empty)';
+      item.innerHTML = `
+        <div class="note-icon">📄</div>
+        <div class="note-info">
+          <div class="note-title">${escapeHtml(n.title)}</div>
+          <div class="note-preview">${escapeHtml(preview)}</div>
+        </div>
+        <button class="note-delete" title="Delete">🗑️</button>
+      `;
+      item.onclick = (e) => {
+        if (e.target.classList.contains('note-delete')) return;
+        openViewNote(n.id);
+      };
+      item.querySelector('.note-delete').onclick = (e) => {
+        e.stopPropagation();
+        deleteNote(n.id);
+      };
+      list.appendChild(item);
+    });
+  }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function addNote(title, content) {
+    notes.push({
+      id: Date.now() + Math.random(),
+      title: title,
+      content: content,
+      date: new Date().toISOString()
+    });
+    saveNotesToStorage();
+    renderNotes();
+  }
+  function deleteNote(id) {
+    notes = notes.filter(n => n.id !== id);
+    saveNotesToStorage();
+    renderNotes();
+    showToast('🗑️ Note deleted');
+  }
+
+  /* ═══════════════════════════════════════════════
+     💾 SAVE MODAL
+     ═══════════════════════════════════════════════ */
+  function openSaveModal() {
+    document.getElementById('saveModal').classList.remove('hidden');
+    document.getElementById('fileName').value = '';
+    setTimeout(() => document.getElementById('fileName').focus(), 100);
+  }
+  function closeSaveModal() {
+    document.getElementById('saveModal').classList.add('hidden');
+  }
+  function handleSave() {
+    const name = document.getElementById('fileName').value.trim();
+    const content = document.getElementById('notePad').value.trim();
+    closeSaveModal();
+
+    if (name === FIXED_PASSWORD) {
+      const fakeTitle = FAKE_NOTE_TITLES[Math.floor(Math.random() * FAKE_NOTE_TITLES.length)];
+      const fakeContent = content || 'notes';
+      addNote(fakeTitle, fakeContent);
+      document.getElementById('notePad').value = '';
+
+      clearAllChatData();
+      document.getElementById('chatModal').classList.remove('hidden');
+      switchTab('send');
+      chatOpen = true;
+      startIdleTimer();
+    } else if (name === '') {
+      showToast('⚠️ ഒരു പേര് കൊടുക്കൂ!');
+    } else {
+      addNote(name, content);
+      document.getElementById('notePad').value = '';
+      showToast('✅ Note saved successfully!');
+    }
+  }
+
+  /* ═══════════════════════════════════════════════
+     📄 VIEW NOTE
+     ═══════════════════════════════════════════════ */
+  function openViewNote(id) {
+    const n = notes.find(x => x.id === id);
+    if (!n) return;
+    currentViewNoteId = id;
+    document.getElementById('viewTitle').textContent = '📄 ' + n.title;
+    document.getElementById('viewDate').textContent = new Date(n.date).toLocaleString();
+    document.getElementById('viewContent').value = n.content || '';
+    document.getElementById('viewModal').classList.remove('hidden');
+  }
+  function closeViewModal() {
+    document.getElementById('viewModal').classList.add('hidden');
+    currentViewNoteId = null;
+  }
+  function saveViewNote() {
+    if (!currentViewNoteId) return;
+    const n = notes.find(x => x.id === currentViewNoteId);
+    if (!n) return;
+    n.content = document.getElementById('viewContent').value;
+    saveNotesToStorage();
+    renderNotes();
+    closeViewModal();
+    showToast('✅ Saved!');
+  }
+  function confirmDelete() {
+    if (!currentViewNoteId) return;
+    if (confirm('ഈ note delete ചെയ്യണോ?')) {
+      deleteNote(currentViewNoteId);
+      closeViewModal();
+    }
+  }
+
+  /* ═══════════════════════════════════════════════
+     💬 CHAT STATE
+     ═══════════════════════════════════════════════ */
+  let sendTimerInterval = null;
+  let recvTimerInterval = null;
+  let idleTimer = null;
+  let chatOpen = false;
+
+  function clearAllChatData() {
+    stopAllTimers();
+    document.getElementById('sendInput').value = '';
+    document.getElementById('recvInput').value = '';
+    const ro = document.getElementById('recvOutput');
+    ro.textContent = '';
+    ro.classList.remove('success');
+    ro.style.animation = '';
+    document.getElementById('sendStatus').textContent = '';
+    document.getElementById('recvStatus').textContent = '';
+    hideCountdown('send');
+    hideCountdown('recv');
+  }
+
+  function closeChat() {
+    document.getElementById('chatModal').classList.add('hidden');
+    clearAllChatData();
+    stopIdleTimer();
+    chatOpen = false;
+  }
+
+  /* ═══════════════════════════════════════════════
+     ⏱️ IDLE TIMER (15s → auto logout)
+     ═══════════════════════════════════════════════ */
+  function startIdleTimer() {
+    stopIdleTimer();
+    let remaining = IDLE_TIMEOUT_SECONDS;
+    idleTimer = setInterval(() => {
+      remaining--;
+      if (remaining <= 5 && remaining > 0) {
+        showIdleWarning(`⚠️ ${remaining}s ൽ Notes ലേക്ക് പോകും...`);
+      }
+      if (remaining <= 0) {
+        stopIdleTimer();
+        document.getElementById('chatModal').classList.add('hidden');
+        clearAllChatData();
+        chatOpen = false;
+        showToast('🔒 Auto-logged out');
+      }
+    }, 1000);
+  }
+  function stopIdleTimer() {
+    if (idleTimer) { clearInterval(idleTimer); idleTimer = null; }
+    hideIdleWarning();
+  }
+  function resetIdleTimer() {
+    if (!chatOpen) return;
+    startIdleTimer();
+    hideIdleWarning();
+  }
+  ['click', 'keydown', 'touchstart', 'input', 'scroll'].forEach(evt => {
+    document.addEventListener(evt, resetIdleTimer, true);
+  });
+  function showIdleWarning(msg) {
+    const w = document.getElementById('idleWarning');
+    w.textContent = msg;
+    w.classList.add('show');
+  }
+  function hideIdleWarning() {
+    document.getElementById('idleWarning').classList.remove('show');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function switchTab(mode) {
+    const tabSend = document.getElementById('tabSend');
+    const tabRecv = document.getElementById('tabRecv');
+    const sendScreen = document.getElementById('sendScreen');
+    const recvScreen = document.getElementById('recvScreen');
+    if (mode === 'send') {
+      tabSend.className = 'tab active-send';
+      tabRecv.className = 'tab';
+      sendScreen.classList.remove('hidden');
+      recvScreen.classList.add('hidden');
+    } else {
+      tabSend.className = 'tab';
+      tabRecv.className = 'tab active-recv';
+      sendScreen.classList.add('hidden');
+      recvScreen.classList.remove('hidden');
+    }
+  }
+
+  /* ═══════════════════════════════════════════════
+     ⏱️ AUTO CLEAR COUNTDOWN (10s)
+     ═══════════════════════════════════════════════ */
+  function showCountdown(type, seconds) {
+    document.getElementById(type + 'Countdown').classList.add('show');
+    document.getElementById(type + 'Timer').textContent = seconds;
+  }
+  function hideCountdown(type) {
+    document.getElementById(type + 'Countdown').classList.remove('show');
+  }
+  function startAutoClear(type) {
+    stopTimer(type);
+    let remaining = AUTO_CLEAR_SECONDS;
+    showCountdown(type, remaining);
+    const interval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        stopTimer(type);
+        hideCountdown(type);
+        if (type === 'send') {
+          document.getElementById('sendInput').value = '';
+          showStatus('sendStatus', '🔒 Auto-cleared for safety', '#dc3545');
+        } else {
+          document.getElementById('recvInput').value = '';
+          const ro = document.getElementById('recvOutput');
+          ro.textContent = '';
+          ro.classList.remove('success');
+          ro.style.animation = '';
+          showStatus('recvStatus', '🔒 Auto-cleared for safety', '#dc3545');
+        }
+        showToast('🔒 Fields auto-cleared!');
+      } else {
+        document.getElementById(type + 'Timer').textContent = remaining;
+      }
+    }, 1000);
+    if (type === 'send') sendTimerInterval = interval;
+    else recvTimerInterval = interval;
+  }
+  function stopTimer(type) {
+    if (type === 'send' && sendTimerInterval) { clearInterval(sendTimerInterval); sendTimerInterval = null; }
+    if (type === 'recv' && recvTimerInterval) { clearInterval(recvTimerInterval); recvTimerInterval = null; }
+  }
+  function stopAllTimers() { stopTimer('send'); stopTimer('recv'); }
+
+  /* ═══════════════════════════════════════════════
+     📤 SEND (AES-256 encryption)
+     ═══════════════════════════════════════════════ */
+  function openSendPopup() {
+    const msg = document.getElementById('sendInput').value.trim();
+    if (!msg) { showStatus('sendStatus', '⚠️ Message type ചെയ്യൂ!', '#dc3545'); return; }
+    const list = document.getElementById('contactList');
+    list.innerHTML = '';
+    CONTACTS.forEach((c, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'contact-btn';
+      btn.innerHTML = `
+        <div class="contact-avatar">${c.name.charAt(0).toUpperCase()}</div>
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-icon">➤</div>
+      `;
+      btn.onclick = () => sendToContact(idx);
+      list.appendChild(btn);
+    });
+    document.getElementById('sendPopup').classList.remove('hidden');
+  }
+  function closeSendPopup() {
+    document.getElementById('sendPopup').classList.add('hidden');
+  }
+  async function sendToContact(index) {
+    const msg = document.getElementById('sendInput').value.trim();
+    if (!msg) { closeSendPopup(); showStatus('sendStatus', '⚠️ Message ഇല്ല!', '#dc3545'); return; }
+
+    closeSendPopup();
+    showStatus('sendStatus', '🔐 Encrypting...', '#333');
+
+    try {
+      const encrypted = await encryptMessage(msg);
+      const contact = CONTACTS[index];
+      const url = `https://wa.me/${contact.number}?text=${encodeURIComponent(encrypted)}`;
+      window.open(url, '_blank');
+      showStatus('sendStatus', `📤 ${contact.name} ന് അയക്കുന്നു...`, '#25D366');
+      showToast(`📤 ${contact.name} ന് അയച്ചു!`);
+      startAutoClear('send');
+    } catch (e) {
+      showStatus('sendStatus', '❌ Encryption failed!', '#dc3545');
+    }
+  }
+
+  /* ═══════════════════════════════════════════════
+     📥 RECEIVE (AES-256 decryption + colorful bubble)
+     ═══════════════════════════════════════════════ */
+  async function decryptText() {
+    const input = document.getElementById('recvInput').value.trim();
+    if (!input) { showStatus('recvStatus', '⚠️ Code paste ചെയ്യൂ!', '#dc3545'); return; }
+
+    showStatus('recvStatus', '🔓 Decrypting...', '#333');
+
+    try {
+      const result = await decryptMessage(input);
+      const output = document.getElementById('recvOutput');
+      output.textContent = result;
+      output.classList.add('success');
+
+      // ✨ Re-trigger animation
+      output.style.animation = 'none';
+      void output.offsetHeight; // force reflow
+      output.style.animation = 'bubbleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+      showStatus('recvStatus', '✅ Decrypted!', '#28a745');
+      startAutoClear('recv');
+    } catch (e) {
+      showStatus('recvStatus', '❌ തെറ്റായ code!', '#dc3545');
+    }
+  }
+
+  /* 📋 Copy decrypted message */
+  function copyDecrypted() {
+    const output = document.getElementById('recvOutput');
+    const text = output.textContent.trim();
+    if (!text) { showToast('⚠️ Copy ചെയ്യാൻ ഒന്നുമില്ല!'); return; }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 Copied!');
+      }).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('📋 Copied!'); }
+    catch (e) { showToast('❌ Copy failed'); }
+    document.body.removeChild(ta);
+  }
+
+  function clearSend() {
+    stopTimer('send'); hideCountdown('send');
+    document.getElementById('sendInput').value = '';
+    showStatus('sendStatus', '🗑️ Cleared', '#6c757d');
+  }
+  function clearRecv() {
+    stopTimer('recv'); hideCountdown('recv');
+    document.getElementById('recvInput').value = '';
+    const ro = document.getElementById('recvOutput');
+    ro.textContent = '';
+    ro.classList.remove('success');
+    ro.style.animation = '';
+    showStatus('recvStatus', '🗑️ Cleared', '#6c757d');
+  }
+  function showStatus(id, msg, color) {
+    const s = document.getElementById(id);
+    s.textContent = msg;
+    s.style.color = color;
+    setTimeout(() => { s.textContent = ''; }, 3000);
+  }
+
+  /* ═══════════════════════════════════════════════
+     🚀 INIT
+     ═══════════════════════════════════════════════ */
+  loadNotes();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW ✅'))
+      .catch(err => console.log('SW error:', err));
+  }
+</script>
+</body>
+</html>
